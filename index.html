@@ -27,7 +27,14 @@
   .mapbox{ flex:none; height:40vh; position:relative; }
   #map{ position:absolute; inset:0; }
   .amap-controls{ display:none !important; }
-  .mapbox .full{ position:absolute; top:10px; right:10px; z-index:5; background:rgba(255,255,255,.94); backdrop-filter:blur(6px); border-radius:8px; padding:7px 12px; font-size:12px; font-weight:550; color:var(--ink); cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,.1); }
+  .mapbox .full{ position:absolute; top:10px; right:10px; z-index:55; background:rgba(255,255,255,.94); backdrop-filter:blur(6px); border-radius:8px; padding:7px 12px; font-size:12px; font-weight:550; color:var(--ink); cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,.1); }
+  .mapbox.expand{ position:fixed; inset:0; height:100dvh; z-index:50; }
+  .mapbox.expand .full{ top:max(14px,env(safe-area-inset-top)); }
+  .catbar{ position:absolute; top:10px; left:10px; right:78px; z-index:6; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; }
+  .catbar::-webkit-scrollbar{ display:none; }
+  .catbar .cc{ flex:none; font-size:11.5px; font-weight:550; padding:5px 11px; border-radius:8px; background:rgba(255,255,255,.92); backdrop-filter:blur(6px); box-shadow:0 1px 6px rgba(0,0,0,.1); color:var(--ink2); cursor:pointer; white-space:nowrap; }
+  .catbar .cc.on{ background:var(--ink); color:#fff; }
+  .mapbox.expand .catbar{ top:max(14px,env(safe-area-inset-top)); }
 
   /* 下半列表 */
   .panel{ flex:1; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; background:var(--bg); border-radius:16px 16px 0 0; margin-top:-14px; box-shadow:0 -2px 12px rgba(0,0,0,.05); position:relative; z-index:2; }
@@ -40,6 +47,7 @@
   .hero .meta{ display:flex; gap:24px; margin-top:12px; }
   .hero .meta b{ font-size:19px; font-weight:660; font-feature-settings:'tnum'; }
   .hero .meta span{ display:block; font-size:11px; color:var(--ink3); }
+  .hero .intro{ font-size:13px; color:var(--ink2); line-height:1.72; margin-top:14px; }
 
   .seclab{ font-size:11px; font-weight:650; letter-spacing:.07em; text-transform:uppercase; color:var(--ink3); margin:22px 0 12px; }
 
@@ -83,7 +91,7 @@
 <body>
 <div class="app">
   <div class="chips" id="chips"></div>
-  <div class="mapbox"><div class="full" id="openFull">全部点</div><div id="map"></div></div>
+  <div class="mapbox"><div class="full" id="openFull">⛶ 展开</div><div class="catbar" id="catbar"></div><div id="map"></div></div>
   <div class="panel"><div class="panel-in" id="panel"></div></div>
 </div>
 
@@ -95,7 +103,7 @@ const CC=Object.fromEntries(CAT.map(c=>[c[0],c[1]])), CE=Object.fromEntries(CAT.
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const parse=s=>{ if(!s||typeof s!=='string')return null; const a=s.split(',').map(Number); return (a.length===2&&Number.isFinite(a[0])&&Number.isFinite(a[1]))?a:null; };
 
-let MAP,INFO,ROUTES,POIS,cur;
+let MAP,INFO,ROUTES,POIS,cur,activeCat=null;
 let routeLine,stopMarkers=[],poiMarkers=[],nameMarker={},activeKey=null;
 
 function clearMap(){ if(routeLine)routeLine.forEach(l=>l.setMap(null)); routeLine=null;
@@ -134,14 +142,18 @@ function pathKm(path){ let d=0; for(let i=1;i<path.length;i++){ const dx=(path[i
 
 function render(){
   const isOther=(cur==='other'); const r=isOther?null:ROUTES.find(x=>x.no===cur);
-  const list=listFor(cur);
+  const fullList=listFor(cur);
+  const list=activeCat?fullList.filter(p=>p.cat===activeCat):fullList;
   clearMap(); drawRoute(r,list); fitMap();
+  const _cats=CAT.filter(([c])=>fullList.some(p=>p.cat===c)); const _cb=document.getElementById('catbar');
+  _cb.innerHTML=`<div class="cc${!activeCat?' on':''}" data-c="">全部 ${fullList.length}</div>`+_cats.map(([c])=>`<div class="cc${activeCat===c?' on':''}" data-c="${c}">${CE[c]} ${c}</div>`).join('');
+  _cb.querySelectorAll('.cc').forEach(el=>el.onclick=()=>{ activeCat=el.dataset.c||null; render(); });
   const panel=document.getElementById('panel'); panel.parentElement.scrollTop=0;
   let h=`<div class="hero fade">`;
   if(isOther) h+=`<h1>城中其它</h1><div class="theme">不在任一徒步线 3 公里内、值得专程去的收藏（武林·城东·滨江）</div>`;
   else h+=`<h1>${esc(r.name.split('·')[0])}</h1><div class="theme">${esc(r.area)} · ${esc(r.theme||'')}</div>`
     +`<div class="meta"><div><b>${r.stops.length}</b><span>个景点</span></div>`
-    +(r.walk_path&&r.walk_path.length>1?`<div><b>${pathKm(r.walk_path)}</b><span>公里步行</span></div>`:'')+`</div>`;
+    +(r.walk_path&&r.walk_path.length>1?`<div><b>${pathKm(r.walk_path)}</b><span>公里步行</span></div>`:'')+`</div>`+(r.intro?`<div class="intro">${esc(r.intro)}</div>`:'');
   h+=`</div>`;
   if(!isOther){ h+=`<div class="seclab">行程 · ${r.stops.length} 站</div><div class="timeline">`
     +r.stops.map(s=>`<div class="stop"><div class="pin"></div><div class="sn">${esc(s.name)}${s.ticket?`<span class="tk">${esc(s.ticket)}</span>`:''}</div><div class="sd">${esc(s.desc||'')}</div></div>`).join('')+`</div>`; }
@@ -171,11 +183,13 @@ async function main(){
 
   const chips=document.getElementById('chips');
   const mk=(label,k)=>{ const el=document.createElement('div'); el.className='chip'+(k===cur?' on':''); el.textContent=label;
-    el.onclick=()=>{ cur=k; [...chips.children].forEach(c=>c.classList.remove('on')); el.classList.add('on'); render(); };
+    el.onclick=()=>{ cur=k; activeCat=null; [...chips.children].forEach(c=>c.classList.remove('on')); el.classList.add('on'); render(); };
     chips.appendChild(el); };
   ROUTES.forEach(r=>mk(r.name.split('·')[0],r.no)); mk('城中其它','other');
 
-  document.getElementById('openFull').onclick=()=>fitMap();
+  const _mb=document.querySelector('.mapbox'), _fb=document.getElementById('openFull');
+  _fb.onclick=()=>{ const ex=_mb.classList.toggle('expand'); _fb.textContent=ex?'✕ 收起':'⛶ 展开';
+    setTimeout(()=>{ try{ MAP.resize && MAP.resize(); }catch(e){} fitMap(); }, 60); };
   render();
   window.addEventListener('resize',fitMap);
 }

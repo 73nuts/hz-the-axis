@@ -32,7 +32,7 @@
   .mapbox.expand .full{ top:max(14px,env(safe-area-inset-top)); }
   .catbar{ position:absolute; top:10px; left:10px; right:78px; z-index:6; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; }
   .catbar::-webkit-scrollbar{ display:none; }
-  .catbar .cc{ flex:none; font-size:11.5px; font-weight:550; padding:5px 11px; border-radius:8px; background:rgba(255,255,255,.92); backdrop-filter:blur(6px); box-shadow:0 1px 6px rgba(0,0,0,.1); color:var(--ink2); cursor:pointer; white-space:nowrap; }
+  .catbar .cc{ flex:none; display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:550; padding:5px 11px; border-radius:8px; background:rgba(255,255,255,.92); backdrop-filter:blur(6px); box-shadow:0 1px 6px rgba(0,0,0,.1); color:var(--ink2); cursor:pointer; white-space:nowrap; }
   .catbar .cc.on{ background:var(--ink); color:#fff; }
   .mapbox.expand .catbar{ top:max(14px,env(safe-area-inset-top)); }
 
@@ -64,7 +64,7 @@
   /* 可折叠分类 */
   .grp{ background:var(--surface); border:1px solid var(--line); border-radius:13px; margin-bottom:10px; overflow:hidden; }
   .grp-h{ display:flex; align-items:center; gap:9px; padding:13px 15px; cursor:pointer; user-select:none; }
-  .grp-h .ic{ font-size:15px; width:22px; text-align:center; }
+  .grp-h .ic{ width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; }
   .grp-h .gn{ font-size:14px; font-weight:600; }
   .grp-h .gc{ font-size:12px; color:var(--ink3); }
   .grp-h .arw{ margin-left:auto; color:var(--ink3); font-size:12px; transition:transform .25s var(--ease); }
@@ -98,8 +98,17 @@
 <script>window._AMapSecurityConfig={securityJsCode:'4822694c09fb8c77c97a21e81c264801'};</script>
 <script src="https://webapi.amap.com/maps?v=2.0&key=ade75e62f7ec90f8599d14a0fc10ab4b"></script>
 <script>
-const CAT=[['吃饭','#d9644a','🍚'],['咖啡','#9e7a52','☕'],['清吧','#6d6aa8','🍸'],['面包甜品','#cf7ba2','🍰'],['景点','#2f9e7d','⛰'],['其他','#a6abab','◦']];
-const CC=Object.fromEntries(CAT.map(c=>[c[0],c[1]])), CE=Object.fromEntries(CAT.map(c=>[c[0],c[2]]));
+const ICON={
+  utensils:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+  coffee:'<path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/>',
+  martini:'<path d="M12 12 4.207 4.207A.707.707 0 0 1 4.707 3h14.586a.707.707 0 0 1 .5 1.207z"/><path d="M12 12v10"/><path d="M7 22h10"/>',
+  cake:'<path d="M16 13H3"/><path d="M16 17H3"/><path d="m7.2 7.9-3.388 2.5A2 2 0 0 0 3 12.01V20a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-8.654c0-2-2.44-6.026-6.44-8.026a1 1 0 0 0-1.082.057L10.4 5.6"/><circle cx="9" cy="7" r="2"/>',
+  mountain:'<path d="m8 3 4 8 5-5 5 15H2L8 3z"/>',
+  pin:'<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+};
+const svgIcon=(id,color,size)=>`<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="display:block">${ICON[id]||ICON.pin}</svg>`;
+const CAT=[['吃饭','餐厅','#d9644a','utensils'],['咖啡','咖啡','#9e7a52','coffee'],['清吧','清吧','#6d6aa8','martini'],['面包甜品','面包甜品','#cf7ba2','cake'],['景点','景点','#2f9e7d','mountain'],['其他','其他','#a6abab','pin']];
+const CC=Object.fromEntries(CAT.map(c=>[c[0],c[2]])), CL=Object.fromEntries(CAT.map(c=>[c[0],c[1]])), CI=Object.fromEntries(CAT.map(c=>[c[0],c[3]]));
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const parse=s=>{ if(!s||typeof s!=='string')return null; const a=s.split(',').map(Number); return (a.length===2&&Number.isFinite(a[0])&&Number.isFinite(a[1]))?a:null; };
 
@@ -108,8 +117,8 @@ let routeLine,stopMarkers=[],poiMarkers=[],nameMarker={},activeKey=null;
 
 function clearMap(){ if(routeLine)routeLine.forEach(l=>l.setMap(null)); routeLine=null;
   stopMarkers.forEach(m=>m.setMap(null)); stopMarkers=[]; poiMarkers.forEach(o=>o.m.setMap(null)); poiMarkers=[]; nameMarker={}; INFO&&INFO.close(); activeKey=null; }
-function poiEl(c,em,active){ const sz=active?26:22;
-  return `<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:#fff;border:2px solid ${c};display:flex;align-items:center;justify-content:center;font-size:${active?13:11}px;box-shadow:0 1px 4px rgba(0,0,0,.28);opacity:${active||!activeKey?1:.45};transition:all .25s ease">${em}</div>`; }
+function poiEl(c,id,active){ const sz=active?26:22, isz=active?15:13;
+  return `<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:#fff;border:2px solid ${c};display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.28);opacity:${active||!activeKey?1:.45};transition:all .25s ease">${svgIcon(id,c,isz)}</div>`; }
 
 function drawRoute(r,list){
   routeLine=[];
@@ -124,12 +133,12 @@ function drawRoute(r,list){
     stopMarkers.push(m); nameMarker['s:'+s.name]=m;
   });
   list.forEach(p=>{ const ll=parse(p.location); if(!ll)return; const c=CC[p.cat]||CC['其他'];
-    const m=new AMap.Marker({position:ll,map:MAP,zIndex:60,offset:new AMap.Pixel(-11,-11),content:poiEl(c,CE[p.cat]||'◦',false)});
+    const m=new AMap.Marker({position:ll,map:MAP,zIndex:60,offset:new AMap.Pixel(-11,-11),content:poiEl(c,CI[p.cat]||'pin',false)});
     m.on('click',()=>activatePoi(p.name));
     poiMarkers.push({m,p,c}); nameMarker['p:'+p.name]=m;
   });
 }
-function refreshPoi(){ poiMarkers.forEach(({m,p,c})=>m.setContent(poiEl(c,CE[p.cat]||'◦',activeKey===p.name))); }
+function refreshPoi(){ poiMarkers.forEach(({m,p,c})=>m.setContent(poiEl(c,CI[p.cat]||'pin',activeKey===p.name))); }
 function activatePoi(name){ const it=poiMarkers.find(o=>o.p.name===name); if(!it)return; activeKey=name; refreshPoi();
   const ll=parse(it.p.location); MAP.setZoomAndCenter(16,ll,true,460);
   INFO.setContent(`<div class="card"><div class="cn">${esc(it.p.name)}</div><div class="cd">${esc(it.p.cat)} · ${esc(it.p.addr||'')}</div></div>`); INFO.open(MAP,ll); }
@@ -146,7 +155,7 @@ function render(){
   const list=activeCat?fullList.filter(p=>p.cat===activeCat):fullList;
   clearMap(); drawRoute(r,list); fitMap();
   const _cats=CAT.filter(([c])=>fullList.some(p=>p.cat===c)); const _cb=document.getElementById('catbar');
-  _cb.innerHTML=`<div class="cc${!activeCat?' on':''}" data-c="">全部 ${fullList.length}</div>`+_cats.map(([c])=>`<div class="cc${activeCat===c?' on':''}" data-c="${c}">${CE[c]} ${c}</div>`).join('');
+  _cb.innerHTML=`<div class="cc${!activeCat?' on':''}" data-c="">全部 ${fullList.length}</div>`+_cats.map(([c,label])=>`<div class="cc${activeCat===c?' on':''}" data-c="${c}">${svgIcon(CI[c],'currentColor',13)}${label}</div>`).join('');
   _cb.querySelectorAll('.cc').forEach(el=>el.onclick=()=>{ activeCat=el.dataset.c||null; render(); });
   const panel=document.getElementById('panel'); panel.parentElement.scrollTop=0;
   let h=`<div class="hero fade">`;
@@ -159,9 +168,9 @@ function render(){
     +r.stops.map(s=>`<div class="stop"><div class="pin"></div><div class="sn">${esc(s.name)}${s.ticket?`<span class="tk">${esc(s.ticket)}</span>`:''}</div><div class="sd">${esc(s.desc||'')}</div></div>`).join('')+`</div>`; }
   h+=`<div class="seclab">${isOther?'城中收藏':'沿途吃喝'} · ${list.length} 处</div>`;
   if(!list.length) h+=`<div class="empty">这条线 3 公里内还没有收录的店</div>`;
-  else h+=CAT.map(([cat,col,em])=>{ const items=list.filter(p=>p.cat===cat); if(!items.length)return '';
+  else h+=CAT.map(([cat,label,col,id])=>{ const items=list.filter(p=>p.cat===cat); if(!items.length)return '';
     const open=items.length<=5;  // 5 个以内默认展开，多的收起
-    return `<div class="grp${open?' open':''}" data-cat="${cat}"><div class="grp-h"><span class="ic">${em}</span><span class="gn">${cat}</span><span class="gc">${items.length}</span><span class="arw">▸</span></div>`
+    return `<div class="grp${open?' open':''}" data-cat="${cat}"><div class="grp-h"><span class="ic">${svgIcon(id,col,16)}</span><span class="gn">${label}</span><span class="gc">${items.length}</span><span class="arw">▸</span></div>`
       +`<div class="grp-body"><div>`
       +items.map(p=>`<div class="eat" data-n="${esc(p.name)}"><div><div class="en">${esc(p.name)}</div><div class="ea">${esc(p.addr||'')}</div></div>`
         +(p.route_dist?`<span class="ed">${(p.route_dist/1000).toFixed(1)} km</span>`:'')+`</div>`).join('')

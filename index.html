@@ -1,9 +1,16 @@
 <!DOCTYPE html>
+<!--
+  杭州 City Walk
+  Made by 阿鸭 · 2026 · Curated by 阿鸭 🦆
+  © 转载、分享或二次开发请保留署名。Crafted with care.
+-->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>杭州 City Walk</title>
+<meta name="author" content="阿鸭">
+<meta name="description" content="杭州 City Walk · Curated by 阿鸭">
 <style>
   :root{
     --ink:#1a1b1d; --ink2:#6c7075; --ink3:#a6abab; --line:#ecedeb; --line2:#f4f5f3;
@@ -86,6 +93,10 @@
 
   @keyframes fade{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
   .fade{ animation:fade .38s var(--ease) both; }
+
+  /* 署名 · Curated by 阿鸭 */
+  .sig{ text-align:center; font-size:11px; color:var(--ink3); padding:20px 0 4px; letter-spacing:.04em; }
+  .sig b{ font-weight:600; color:var(--ink2); }
 </style>
 </head>
 <body>
@@ -95,9 +106,19 @@
   <div class="panel"><div class="panel-in" id="panel"></div></div>
 </div>
 
+<!-- ========== 高德地图 Key 配置 ==========
+  下面两个值是前端 key，必然对访问者可见，无法隐藏（环境变量 / 加密都挡不住，
+  因为代码和密钥都在用户浏览器里运行，且 key 最终以明文出现在网络请求里）。
+  安全性靠高德控制台的【域名白名单】保证：只有绑定的域名能用此 key，被盗用也无效。
+  → 配白名单 / 换 key：https://console.amap.com/dev/key/app （服务平台选 Web端(JSAPI)）
+  ⚠ 旧 key 已进入公开 git 历史 = 已泄露，建议在控制台重新申请新 key 后替换下面两行。
+-->
 <script>window._AMapSecurityConfig={securityJsCode:'4822694c09fb8c77c97a21e81c264801'};</script>
 <script src="https://webapi.amap.com/maps?v=2.0&key=ade75e62f7ec90f8599d14a0fc10ab4b"></script>
 <script>
+/* ── 署名 · Curated by 阿鸭 ── */
+const _CREDIT='Curated by 阿鸭 · 杭州 City Walk';
+try{ console.log('%c🦆 '+_CREDIT,'font:600 13px sans-serif;color:#147d6b;padding:2px 0'); }catch(e){}
 const ICON={
   utensils:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
   coffee:'<path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/>',
@@ -175,6 +196,7 @@ function render(){
       +items.map(p=>`<div class="eat" data-n="${esc(p.name)}"><div><div class="en">${esc(p.name)}</div><div class="ea">${esc(p.addr||'')}</div></div>`
         +(p.route_dist?`<span class="ed">${(p.route_dist/1000).toFixed(1)} km</span>`:'')+`</div>`).join('')
       +`</div></div></div>`; }).join('');
+  h+=`<div class="sig">🦆 <b>Curated by 阿鸭</b> · 杭州 City Walk</div>`;
   panel.innerHTML=h;
   panel.querySelectorAll('.grp-h').forEach(hd=>hd.onclick=()=>hd.parentElement.classList.toggle('open'));
   panel.querySelectorAll('.eat').forEach(el=>el.onclick=e=>{ e.stopPropagation(); activatePoi(el.dataset.n); });

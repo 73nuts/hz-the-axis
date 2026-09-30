@@ -99,7 +99,10 @@
   /* 署名 · Curated by 阿鸭 */
   .sig{ text-align:center; font-size:11px; color:var(--ink3); padding:20px 0 4px; letter-spacing:.04em; }
   .sig b{ font-weight:600; color:var(--ink2); }
+  .sig-n{ display:inline-block; margin-top:6px; font-size:10px; opacity:.7; letter-spacing:0; }
 </style>
+<!-- 匿名访问统计（Umami Cloud）：无 cookie、不存原始 IP；data-domains 让本地预览不计数 -->
+<script defer src="https://cloud.umami.is/script.js" data-website-id="7a43f21c-29af-4926-8d93-8e967c0f42be" data-domains="73nuts.github.io"></script>
 </head>
 <body>
 <div class="app">
@@ -122,6 +125,15 @@
 /* ── 署名 · Curated by 阿鸭 ── */
 const _CREDIT='Curated by 阿鸭 · 杭州 City Walk';
 try{ console.log('%c🦆 '+_CREDIT,'font:600 13px sans-serif;color:#147d6b;padding:2px 0'); }catch(e){}
+/* ── Analytics: click events + dwell time. Never let tracking break the page. ── */
+const track=(n,d)=>{ try{ window.umami&&umami.track(n,d); }catch(e){} };
+// Single-page site has no second pageview, so report visible time when the page is hidden or closed.
+let _vis=0,_t0=document.visibilityState==='visible'?Date.now():0,_sent=0;
+const _dur=s=>s<10?'0-10秒':s<30?'10-30秒':s<60?'30-60秒':s<180?'1-3分钟':s<600?'3-10分钟':'10分钟以上';
+function _flush(){ if(_t0){ _vis+=Date.now()-_t0; _t0=0; } const s=Math.round(_vis/1000); if(s-_sent<3)return; _sent=s; track('leave',{sec:s,dur:_dur(s)}); }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden')_flush(); else if(!_t0)_t0=Date.now(); });
+window.addEventListener('pagehide',_flush);
+
 const ICON={
   utensils:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
   coffee:'<path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/>',
@@ -153,7 +165,7 @@ function drawRoute(r,list){
   if(r)r.stops.forEach((s,i)=>{ const ll=parse(s.location); if(!ll)return;
     const m=new AMap.Marker({position:ll,map:MAP,zIndex:200,offset:new AMap.Pixel(-13,-13),
       content:`<div style="width:26px;height:26px;border-radius:50%;background:#147d6b;color:#fff;font:600 13px var(--sans),sans-serif;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)">${s.order||i+1}</div>`});
-    m.on('click',()=>{INFO.setContent(`<div class="card"><div class="cn">${esc(s.name)}</div><div class="cd">${esc(s.ticket||'')} ${esc(s.desc||'')}</div></div>`);INFO.open(MAP,ll);});
+    m.on('click',()=>{track('stop-click',{name:s.name});INFO.setContent(`<div class="card"><div class="cn">${esc(s.name)}</div><div class="cd">${esc(s.ticket||'')} ${esc(s.desc||'')}</div></div>`);INFO.open(MAP,ll);});
     stopMarkers.push(m); nameMarker['s:'+s.name]=m;
   });
   list.forEach(p=>{ const ll=parse(p.location); if(!ll)return; const c=CC[p.cat]||CC['其他'];
@@ -163,7 +175,7 @@ function drawRoute(r,list){
   });
 }
 function refreshPoi(){ poiMarkers.forEach(({m,p,c})=>m.setContent(poiEl(c,CI[p.cat]||'pin',activeKey===p.name))); }
-function activatePoi(name){ const it=poiMarkers.find(o=>o.p.name===name); if(!it)return; activeKey=name; refreshPoi();
+function activatePoi(name){ const it=poiMarkers.find(o=>o.p.name===name); if(!it)return; track('poi-click',{name}); activeKey=name; refreshPoi();
   const ll=parse(it.p.location); MAP.setZoomAndCenter(16,ll,true,460);
   INFO.setContent(`<div class="card"><div class="cn">${esc(it.p.name)}</div><div class="cd">${esc(it.p.cat)} · ${esc(it.p.addr||'')}</div></div>`); INFO.open(MAP,ll); }
 function fitMap(){ const ov=[]; if(routeLine)ov.push(...routeLine); ov.push(...stopMarkers); poiMarkers.forEach(o=>ov.push(o.m));
@@ -180,7 +192,7 @@ function render(){
   clearMap(); drawRoute(r,list); fitMap();
   const _cats=CAT.filter(([c])=>fullList.some(p=>p.cat===c)); const _cb=document.getElementById('catbar');
   _cb.innerHTML=`<div class="cc${!activeCat?' on':''}" data-c="">全部 ${fullList.length}</div>`+_cats.map(([c,label])=>`<div class="cc${activeCat===c?' on':''}" data-c="${c}">${svgIcon(CI[c],'currentColor',13)}${label}</div>`).join('');
-  _cb.querySelectorAll('.cc').forEach(el=>el.onclick=()=>{ activeCat=el.dataset.c||null; render(); });
+  _cb.querySelectorAll('.cc').forEach(el=>el.onclick=()=>{ activeCat=el.dataset.c||null; track('cat-filter',{cat:activeCat||'全部'}); render(); });
   const panel=document.getElementById('panel'); panel.parentElement.scrollTop=0;
   let h=`<div class="hero fade">`;
   if(isOther) h+=`<h1>城中其它</h1><div class="theme">不在任一徒步线 3 公里内、值得专程去的收藏（武林·城东·滨江）</div>`;
@@ -199,9 +211,9 @@ function render(){
       +items.map(p=>`<div class="eat" data-n="${esc(p.name)}"><div><div class="en">${esc(p.name)}</div><div class="ea">${esc(p.addr||'')}</div></div>`
         +(p.route_dist?`<span class="ed">${(p.route_dist/1000).toFixed(1)} km</span>`:'')+`</div>`).join('')
       +`</div></div></div>`; }).join('');
-  h+=`<div class="sig">🦆 <b>Curated by 阿鸭</b> · 杭州 City Walk</div>`;
+  h+=`<div class="sig">🦆 <b>Curated by 阿鸭</b> · 杭州 City Walk<br><span class="sig-n">本站使用匿名访问统计，不记录个人信息</span></div>`;
   panel.innerHTML=h;
-  panel.querySelectorAll('.grp-h').forEach(hd=>hd.onclick=()=>hd.parentElement.classList.toggle('open'));
+  panel.querySelectorAll('.grp-h').forEach(hd=>hd.onclick=()=>{ if(hd.parentElement.classList.toggle('open'))track('group-open',{cat:hd.parentElement.dataset.cat}); });
   panel.querySelectorAll('.eat').forEach(el=>el.onclick=e=>{ e.stopPropagation(); activatePoi(el.dataset.n); });
 }
 
@@ -217,12 +229,12 @@ async function main(){
 
   const chips=document.getElementById('chips');
   const mk=(label,k)=>{ const el=document.createElement('div'); el.className='chip'+(k===cur?' on':''); el.textContent=label;
-    el.onclick=()=>{ cur=k; activeCat=null; [...chips.children].forEach(c=>c.classList.remove('on')); el.classList.add('on'); render(); };
+    el.onclick=()=>{ track('route-switch',{route:label}); cur=k; activeCat=null; [...chips.children].forEach(c=>c.classList.remove('on')); el.classList.add('on'); render(); };
     chips.appendChild(el); };
   ROUTES.forEach(r=>mk(r.name.split('·')[0],r.no)); mk('城中其它','other');
 
   const _mb=document.querySelector('.mapbox'), _fb=document.getElementById('openFull');
-  _fb.onclick=()=>{ const ex=_mb.classList.toggle('expand'); _fb.textContent=ex?'✕ 收起':'⛶ 展开';
+  _fb.onclick=()=>{ const ex=_mb.classList.toggle('expand'); _fb.textContent=ex?'✕ 收起':'⛶ 展开'; if(ex)track('map-expand');
     setTimeout(()=>{ try{ MAP.resize && MAP.resize(); }catch(e){} fitMap(); }, 60); };
   render();
   window.addEventListener('resize',fitMap);

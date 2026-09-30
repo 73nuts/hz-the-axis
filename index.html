@@ -99,7 +99,6 @@
   /* 署名 · Curated by 阿鸭 */
   .sig{ text-align:center; font-size:11px; color:var(--ink3); padding:20px 0 4px; letter-spacing:.04em; }
   .sig b{ font-weight:600; color:var(--ink2); }
-  .sig-n{ display:inline-block; margin-top:6px; font-size:10px; opacity:.7; letter-spacing:0; }
 </style>
 <!-- 匿名访问统计（Umami Cloud）：无 cookie、不存原始 IP；data-domains 让本地预览不计数 -->
 <script defer src="https://cloud.umami.is/script.js" data-website-id="7a43f21c-29af-4926-8d93-8e967c0f42be" data-domains="73nuts.github.io"></script>
@@ -211,7 +210,7 @@ function render(){
       +items.map(p=>`<div class="eat" data-n="${esc(p.name)}"><div><div class="en">${esc(p.name)}</div><div class="ea">${esc(p.addr||'')}</div></div>`
         +(p.route_dist?`<span class="ed">${(p.route_dist/1000).toFixed(1)} km</span>`:'')+`</div>`).join('')
       +`</div></div></div>`; }).join('');
-  h+=`<div class="sig">🦆 <b>Curated by 阿鸭</b> · 杭州 City Walk<br><span class="sig-n">本站使用匿名访问统计，不记录个人信息</span></div>`;
+  h+=`<div class="sig">🦆 <b>Curated by 阿鸭</b> · 杭州 City Walk</div>`;
   panel.innerHTML=h;
   panel.querySelectorAll('.grp-h').forEach(hd=>hd.onclick=()=>{ if(hd.parentElement.classList.toggle('open'))track('group-open',{cat:hd.parentElement.dataset.cat}); });
   panel.querySelectorAll('.eat').forEach(el=>el.onclick=e=>{ e.stopPropagation(); activatePoi(el.dataset.n); });

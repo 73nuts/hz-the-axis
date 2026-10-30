@@ -11,7 +11,7 @@
 - 托管：GitHub Pages，仓库 73nuts/hz-the-axis，**公开仓库**，main 分支根目录直接发布，无构建。
 - 内容：`data/routes-final.json` 9 条路线，`data/pois-final.json` 196 个点位，单页 `index.html`。
 - 提交：最近 `1f69405`（9/30，去掉页脚统计说明），之前一批停在 6/17。
-- 工作区有一个没提交的 `qr-hz-citywalk.png`（二维码图），要不要入库由 Sir 定。
+- 工作区有一个没提交的 `qr-hz-citywalk.png`（二维码图），要不要入库由 the owner 定。
 
 ## 在跑的东西和花费
 - 本机没有定时任务（`crontab` 为空，LaunchAgents 里没有相关项），也没有服务器进程。
@@ -19,7 +19,7 @@
 - 高德地图 JS API（Web 端 key）：个人免费额度，花费为 0 是估的，没进控制台看。
 - Umami Cloud 匿名统计（9/30 接入）：是否免费档没核，见下方。
 
-## 待 Sir 核对
+## 待 the owner 核对
 - 无。Umami 没绑卡（the owner 10-29）；高德 key 白名单配过。
 
 ## 重启条件
